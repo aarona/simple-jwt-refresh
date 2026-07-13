@@ -186,10 +186,10 @@ export class JWTManager {
     try {
       const response = await this.config.fetch(config.url, {
         method: config.method || 'GET',
-        headers,
         body: config.body ? JSON.stringify(config.body) : undefined,
         credentials: 'include', // Include cookies for potential refresh
-        ...config.options
+        ...config.options,
+        headers: { ...headers, ...(config.options?.headers as Record<string, string>) }
       })
 
       // Handle 401 - token might have expired during request
@@ -200,13 +200,14 @@ export class JWTManager {
 
           const retryResponse = await this.config.fetch(config.url, {
             method: config.method || 'GET',
-            headers: {
-              ...headers,
-              'Authorization': `Bearer ${newAccessToken.token}`
-            },
             body: config.body ? JSON.stringify(config.body) : undefined,
             credentials: 'include',
-            ...config.options
+            ...config.options,
+            headers: {
+              ...headers,
+              ...(config.options?.headers as Record<string, string>),
+              'Authorization': `Bearer ${newAccessToken.token}`
+            }
           })
 
           const retryData = retryResponse.headers.get('content-type')?.includes('application/json')

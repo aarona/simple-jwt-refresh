@@ -304,6 +304,52 @@ describe('JWTManager', () => {
       expect(mockFetch).toHaveBeenCalledTimes(3)
     })
 
+    it('should keep the Authorization header when caller passes options.headers', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ data: 'test' })
+      })
+
+      manager.setAccessToken(mockAccessToken)
+      await manager.request({
+        url: 'https://api.example.com/data',
+        options: { headers: { 'X-Custom': 'val' } }
+      })
+
+      const sentHeaders = mockFetch.mock.calls[0][1].headers
+      expect(sentHeaders['Authorization']).toBe(`Bearer ${mockAccessToken.token}`)
+      expect(sentHeaders['X-Custom']).toBe('val')
+    })
+
+    it('should send the fresh Authorization header on the 401 retry even with options.headers', async () => {
+      const newTokenString = createMockToken(ONE_HOUR_IN_MS)
+
+      mockFetch.mockResolvedValueOnce({ ok: false, status: 401 })
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: newTokenString, expires_in: ONE_HOUR_IN_SECONDS })
+      })
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ data: 'test' })
+      })
+
+      manager.setAccessToken(mockAccessToken)
+      await manager.request({
+        url: 'https://api.example.com/data',
+        options: { headers: { 'X-Custom': 'val', 'Authorization': 'Bearer stale' } }
+      })
+
+      // third fetch call is the retry
+      const retryHeaders = mockFetch.mock.calls[2][1].headers
+      expect(retryHeaders['Authorization']).toBe(`Bearer ${newTokenString}`)
+      expect(retryHeaders['X-Custom']).toBe('val')
+    })
+
     it('should clear token and call onAuthFailure when refresh fails after 401', async () => {
       const onAuthFailure = jest.fn()
       config.onAuthFailure = onAuthFailure

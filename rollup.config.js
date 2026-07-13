@@ -17,7 +17,7 @@ module.exports = [
       resolve(),
       commonjs(),
       typescript({
-        tsconfig: './tsconfig.json',
+        tsconfig: './tsconfig.build.json',
         declaration: true,
         declarationDir: 'dist',
         declarationMap: true
@@ -36,7 +36,7 @@ module.exports = [
       resolve(),
       commonjs(),
       typescript({
-        tsconfig: './tsconfig.json',
+        tsconfig: './tsconfig.build.json',
         declaration: false,
         declarationMap: false
       })

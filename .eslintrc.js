@@ -8,8 +8,8 @@ module.exports = {
   plugins: ['@typescript-eslint'],
   extends: [
     'eslint:recommended',
-    '@typescript-eslint/recommended',
-    '@typescript-eslint/recommended-requiring-type-checking'
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-type-checked'
   ],
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -28,5 +28,14 @@ module.exports = {
     es6: true,
     jest: true
   },
+  overrides: [
+    {
+      files: ['src/__tests__/**/*.ts'],
+      rules: {
+        '@typescript-eslint/require-await': 'off',
+        '@typescript-eslint/no-unsafe-argument': 'off'
+      }
+    }
+  ],
   ignorePatterns: ['dist/', 'node_modules/', '*.js']
 }
